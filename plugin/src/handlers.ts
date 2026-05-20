@@ -85,9 +85,18 @@ export async function updateXmlForNode({
   const attrs = JSON.parse(xml)
 
   const isTextStyleOnly = Object.keys(attrs).every((k) => TEXT_STYLE_KEYS.has(k))
+
   if (isTextStyleOnly) {
-    await (framer as any).setTextStyleAttributes?.(nodeId, attrs)
-    return `Updated text style on ${nodeId}`
+    const inlineStyle = (node as any).inlineTextStyle
+    if (inlineStyle?.id) {
+      const textStyle = await (framer as any).getTextStyle?.(inlineStyle.id)
+      if (textStyle?.setAttributes) {
+        await textStyle.setAttributes(attrs)
+        return `Updated TextStyle "${inlineStyle.name}" (${inlineStyle.id}) on node ${nodeId}`
+      }
+    }
+    await node.setAttributes?.(attrs)
+    return `Updated node attributes on ${nodeId}`
   }
 
   if (attrs.text !== undefined && typeof node.setText === "function") {
@@ -98,18 +107,6 @@ export async function updateXmlForNode({
     await node.setAttributes?.(attrs)
   }
   return `Updated node ${nodeId}`
-}
-
-export async function setNodeTextStyle({
-  nodeId,
-  attrs,
-}: {
-  nodeId: string
-  attrs: Record<string, unknown>
-}): Promise<string> {
-  const result = await (framer as any).setTextStyleAttributes?.(nodeId, attrs)
-  if (result === null || result === undefined) throw new Error(`setTextStyleAttributes failed for node ${nodeId}`)
-  return `Set text style on ${nodeId}`
 }
 
 export async function deleteNode({ nodeId }: { nodeId: string }): Promise<string> {
@@ -303,6 +300,46 @@ export async function searchFonts({ query }: { query: string }): Promise<string>
     f.family?.toLowerCase().includes(query.toLowerCase())
   )
   return JSON.stringify(filtered.slice(0, 20), null, 2)
+}
+
+export async function inspectFramerApi(): Promise<string> {
+  const f = framer as any
+  const all: string[] = []
+  let obj = f
+  while (obj && obj !== Object.prototype) {
+    Object.getOwnPropertyNames(obj).forEach((k: string) => { if (!all.includes(k)) all.push(k) })
+    obj = Object.getPrototypeOf(obj)
+  }
+  return JSON.stringify(all.sort(), null, 2)
+}
+
+export async function inspectNode({ nodeId }: { nodeId: string }): Promise<string> {
+  const node = await resolveNode(nodeId)
+  if (!node) throw new Error(`Node ${nodeId} not found`)
+  const all: string[] = []
+  let obj = node
+  while (obj && obj !== Object.prototype) {
+    Object.getOwnPropertyNames(obj).forEach((k: string) => { if (!all.includes(k)) all.push(k) })
+    obj = Object.getPrototypeOf(obj)
+  }
+  return JSON.stringify(all.sort(), null, 2)
+}
+
+export async function inspectTextStyle({ nodeId }: { nodeId: string }): Promise<string> {
+  const node = await resolveNode(nodeId)
+  if (!node) throw new Error(`Node ${nodeId} not found`)
+  const style = (node as any).inlineTextStyle
+  if (!style) return JSON.stringify({ error: "no inlineTextStyle on this node" })
+  const textStyle = await (framer as any).getTextStyle?.(style.id)
+  const methods: string[] = []
+  if (textStyle) {
+    let obj = textStyle
+    while (obj && obj !== Object.prototype) {
+      Object.getOwnPropertyNames(obj).forEach((k: string) => { if (!methods.includes(k)) methods.push(k) })
+      obj = Object.getPrototypeOf(obj)
+    }
+  }
+  return JSON.stringify({ inlineTextStyle: style, textStyleMethods: methods.sort() }, null, 2)
 }
 
 export async function getProjectWebsiteUrl(): Promise<string> {

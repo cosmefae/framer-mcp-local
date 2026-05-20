@@ -67,4 +67,25 @@ See `README.md` § Available MCP tools for the full list (getProjectXml, upsertC
 **`updateXmlForNode` JSON keys.**
 - `{"text": "..."}` → changes visible canvas text (calls `node.setText`)
 - `{"name": "..."}` → renames the layer in the panel (calls `setAttributes`)
+- `{"balance": true}` / text-style keys → routes to `node.inlineTextStyle` → `framer.getTextStyle(id).setAttributes(attrs)`
 When user says "change the text", use `text`. When user says "rename the layer", use `name`.
+
+## Inspect before operating
+
+Before attempting any Framer operation not covered above, use the inspection tools — don't guess:
+
+- `inspectFramerApi` → full list of what the `framer` object exposes at runtime
+- `inspectNode({ nodeId })` → full list of what a specific node exposes
+- `inspectTextStyle({ nodeId })` → reads `inlineTextStyle` + TextStyle methods for that node
+
+**Never use `?.` on a Framer API call without first confirming the method exists via inspect.** Silent `undefined` returns are the main failure mode.
+
+## Confirmed API at runtime (2026-05-20)
+
+**Methods that DO exist on `framer`:**
+addComponentInstance, addText, cloneNode, createCodeFile, createCollection, createColorStyle, createDesignPage, createFrameNode, createManagedCollection, createTextStyle, createWebPage, getActiveCollection, getCanvasRoot, getChildren, getCodeFile, getCodeFiles, getCollection, getCollections, getColorStyle, getColorStyles, getCurrentUser, getCustomCode, getFont, getFonts, getImage, getLocales, getManagedCollection, getManagedCollections, getNode, getNodesWithAttribute, getNodesWithAttributeSet, getNodesWithType, getParent, getPluginData, getProjectInfo, getPublishInfo, getRect, getRedirects, getSelection, getText, getTextStyle, getTextStyles, isAllowedTo, navigateTo, notify, removeNode, removeNodes, setAttributes, setCustomCode, setImage, setParent, setPluginData, setSelection, setText, showUI, subscribeToColorStyles, subscribeToSelection, subscribeToTextStyles, uploadImage, zoomIntoView
+
+**Methods that do NOT exist (return undefined):**
+setTextStyleAttributes, getNodeByID, getPages, getSelectedNodes, exportReactComponents, getComponentInsertUrlAndTypes
+
+**`balance`:** property of TextStyle, not the node. Access via `node.inlineTextStyle` → `framer.getTextStyle(id)` → `textStyle.setAttributes({balance: true})`. The `updateXmlForNode` handler does this automatically.

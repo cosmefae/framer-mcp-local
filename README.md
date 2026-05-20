@@ -83,6 +83,26 @@ That's it. Claude can now read and write the canvas, CMS, and code files.
 | `manageTextStyle` | Create/update text styles |
 | `searchFonts` | Search available fonts |
 | `getProjectWebsiteUrl` | Get the project's published URL |
+| `inspectFramerApi` | List all methods on the `framer` object at runtime |
+| `inspectNode` | List all methods/properties on a specific node at runtime |
+| `inspectTextStyle` | Get a node's `inlineTextStyle` and available TextStyle methods |
+
+## What the Framer API actually exposes
+
+Confirmed at runtime (2026-05-20). These are the real methods — not the TypeScript type definitions, which include things that don't exist in production plugins.
+
+**`framer` object:**
+`addComponentInstance` · `addText` · `cloneNode` · `createCodeFile` · `createCollection` · `createColorStyle` · `createDesignPage` · `createFrameNode` · `createManagedCollection` · `createTextStyle` · `createWebPage` · `getActiveCollection` · `getCanvasRoot` · `getChildren` · `getCodeFile` · `getCodeFiles` · `getCollection` · `getCollections` · `getColorStyle` · `getColorStyles` · `getCurrentUser` · `getCustomCode` · `getFont` · `getFonts` · `getImage` · `getLocales` · `getManagedCollection` · `getManagedCollections` · `getNode` · `getNodesWithAttribute` · `getNodesWithAttributeSet` · `getNodesWithType` · `getParent` · `getPluginData` · `getProjectInfo` · `getPublishInfo` · `getRect` · `getRedirects` · `getSelection` · `getText` · `getTextStyle` · `getTextStyles` · `isAllowedTo` · `navigateTo` · `notify` · `removeNode` · `removeNodes` · `setAttributes` · `setCustomCode` · `setImage` · `setParent` · `setPluginData` · `setSelection` · `setText` · `showUI` · `subscribeToColorStyles` · `subscribeToSelection` · `subscribeToTextStyles` · `uploadImage` · `zoomIntoView`
+
+**Text node properties:**
+`id` · `name` · `getText` · `setText` · `setAttributes` · `inlineTextStyle` · `getChildren` · `remove` · `clone` · `select` · `walk` · `visible` · `locked` · `opacity` · `position` · `width` · `height` · `left` · `top` · `right` · `bottom` · `rotation` · `link` · `font` · `gridItem*`
+
+**TextStyle properties** (via `node.inlineTextStyle` → `framer.getTextStyle(id)`):
+`id` · `name` · `path` · `tag` · `font` · `boldFont` · `color` · `alignment` · `balance` · `fontSize` · `letterSpacing` · `lineHeight` · `paragraphSpacing` · `transform` · `decoration` · `breakpoints` — writable via `textStyle.setAttributes({...})`
+
+**`balance` specifically:** lives on TextStyle, not the node. To set it: `framer.getTextStyle(node.inlineTextStyle.id).setAttributes({balance: true})`. The `updateXmlForNode` tool handles this automatically when you pass `{"balance": true}`.
+
+**Does NOT exist at runtime:** `setTextStyleAttributes`, `getNodeByID`, `getPages`, `getSelectedNodes`, `exportReactComponents`, `getComponentInsertUrlAndTypes`
 
 ## Architecture
 

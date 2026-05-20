@@ -182,15 +182,23 @@ export function registerTools(server: McpServer, bridge: PluginBridge) {
     call(bridge, "getProjectWebsiteUrl")
   )
 
-  // ── Text Style (node-level) ────────────────────────────────────────────────
+  // ── Diagnostics ───────────────────────────────────────────────────────────
+
+  server.tool("inspectFramerApi", "List all methods/properties on the framer object at runtime. Use before attempting unknown operations.", {}, () =>
+    call(bridge, "inspectFramerApi")
+  )
 
   server.tool(
-    "setNodeTextStyle",
-    "Set text style attributes on a node (e.g. balance, fontSize, fontWeight). Uses framer.setTextStyleAttributes under the hood.",
-    {
-      nodeId: z.string().describe("Target node ID"),
-      attrs: z.record(z.unknown()).describe("Text style attributes, e.g. {\"balance\": true}"),
-    },
-    ({ nodeId, attrs }) => call(bridge, "setNodeTextStyle", { nodeId, attrs })
+    "inspectNode",
+    "List all methods/properties available on a specific node at runtime. Use to verify what a node supports before operating on it.",
+    { nodeId: z.string().describe("Node ID to inspect") },
+    ({ nodeId }) => call(bridge, "inspectNode", { nodeId })
+  )
+
+  server.tool(
+    "inspectTextStyle",
+    "Get the inlineTextStyle of a text node and list available TextStyle methods. Use to verify balance, fontSize etc. are accessible before setting them.",
+    { nodeId: z.string().describe("Node ID to inspect") },
+    ({ nodeId }) => call(bridge, "inspectTextStyle", { nodeId })
   )
 }
