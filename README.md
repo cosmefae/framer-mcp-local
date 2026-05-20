@@ -1,8 +1,8 @@
 # framer-mcp-local
 
-> **Heads up:** This is a stopgap. When Framer ships an official MCP server — and they will, it's a matter of time — use that instead. Official tools are more stable, better supported, and the right long-term choice. Figma already went that route with native MCP + Skills integration across Claude, Cursor, and others. Framer will follow.
+> **Heads up:** This is a stopgap. When Framer ships an official MCP — and they will — switch to that. Official beats community every time: better support, better stability, longer runway. Figma did it right with native MCP + Skills across Claude, Cursor, and others. Framer will get there.
 >
-> Until then, this works.
+> Until then: this works.
 
 ---
 
@@ -10,11 +10,11 @@ Local bridge between Claude Code and Framer — runs entirely on your machine.
 
 ## Why this exists
 
-Most Framer MCP servers route your project data through a third-party cloud. Every canvas change, every CMS item, every code file — logged on someone else's server. Possibly Cloudflare. Possibly elsewhere.
+Most Framer MCP setups route your project through a third-party server. Every canvas change, every CMS item, every code file — hitting someone else's infrastructure. Possibly Cloudflare. Possibly worse.
 
-That didn't sit right. So I built something that keeps the whole loop local: Claude talks to a Node server on your machine, which talks directly to the Framer plugin over WebSocket. Nothing leaves your computer. No accounts, no API keys, no middlemen.
+I didn't want that. So I built a local bridge: Claude → Node server on your machine → WebSocket → Framer plugin. Nothing leaves. No accounts, no API keys, no cloud dependency.
 
-Scratched my own itch. Figured others might have the same one.
+Scratched my own itch. If you have the same one, here you go.
 
 ## Requirements
 
@@ -38,7 +38,7 @@ npm run dev
 
 Starts **Vite dev server only** — plugin UI on `http://localhost:5173`.
 
-> **Why not the MCP server too?** Claude Code auto-starts `node server/dist/index.js` via stdio (registered in `~/.claude/mcp.json`). If `npm run dev` also starts the server, both processes compete for port 9374 — the Claude-spawned instance crashes, and **no MCP tools appear in the session**. Port 9374 must be owned exclusively by Claude Code's MCP process.
+> **Why not start the MCP server here too?** Claude Code owns port 9374 — it spawns `node server/dist/index.js` via stdio on startup. If `npm run dev` also starts it, both fight for the port, the Claude-managed process loses, and no tools register. Don't touch 9374.
 
 ## Use with Claude Code
 
@@ -56,7 +56,7 @@ claude mcp add framer-local -- node /Users/cosmefae/git/framer-mcp-local/server/
 2. Paste `http://localhost:5173` → **Open**
 3. Plugin shows `Claude connected` when ready
 
-Claude can now call all MCP tools directly (read/edit canvas, CMS, code files).
+That's it. Claude can now read and write the canvas, CMS, and code files.
 
 ## Available MCP tools
 
@@ -101,30 +101,31 @@ Framer canvas / CMS / code files
 
 ## What you can build with this
 
-Some things people are actually doing (or could do) with a local Claude ↔ Framer bridge:
+What people are using a local Claude ↔ Framer bridge for:
 
-- **Programmatic SEO pages** — feed Claude a keyword list, have it generate and populate CMS entries, create pages, and wire up content automatically
-- **Marketing agents** — let Claude update copy, swap headlines, and refresh CTAs across multiple pages based on campaign briefs or A/B test results
-- **Narrative-driven sites** — have Claude rewrite page sections to match a new brand voice, tone shift, or audience segment
-- **Content pipelines** — pull from a spreadsheet or API, push structured content into Framer CMS without touching the editor
-- **Design audits** — scan the canvas for inconsistencies (wrong colors, outdated text styles) and fix them in batch
-- **Launch automation** — update "coming soon" → live content, swap placeholder text, and publish — all in one Claude session
+→ **Programmatic SEO** — keyword list in, CMS entries + pages out, automatically
+→ **Marketing agents** — Claude updates copy, swaps headlines, refreshes CTAs based on briefs or test results
+→ **Voice/narrative shifts** — rewrite sections to match a new brand tone without touching the editor
+→ **Content pipelines** — pull from spreadsheets or APIs, push into Framer CMS directly
+→ **Design audits** — scan for inconsistencies (wrong colors, stale text styles), fix in batch
+→ **Launch automation** — flip "coming soon" to live content, swap placeholders, publish — one session
 
 ## How to actually use this
 
+Two things make or break the workflow.
+
 ### Always select first
 
-Before asking Claude to read or change anything on the canvas, **click the element in Framer first**. The project tree API doesn't work reliably on large projects, so selection is how Claude finds what you're pointing at.
+`getProjectXml` isn't reliable on large projects. Don't start from the tree.
 
-Workflow:
+Start from selection: click the element in Framer, then tell Claude what to do with it. That's the whole workflow.
+
 1. Click the element in Framer
 2. Tell Claude what to do with it
 
-That's it.
-
 ### Changing text content vs. renaming a layer
 
-These are two different things and Claude needs to know which one you mean:
+Two different operations. Claude needs to know which one:
 
 | What you want | How to say it |
 |---|---|
@@ -135,7 +136,9 @@ Internally, `{"text": "..."}` changes visible content and `{"name": "..."}` rena
 
 ### Nodes inside components
 
-If Claude says it can't find a node — even though you just selected it — it's likely inside a component. The fix: make sure the element is selected in Framer right before you ask Claude to edit it. The fallback reads from your current selection.
+Claude says node not found — even though you just selected it. It's inside a component. `getNodeByID` doesn't reach those.
+
+Fix: keep the element selected in Framer right before asking Claude to edit. The fallback reads from your active selection.
 
 ## Troubleshooting
 
@@ -147,6 +150,6 @@ If Claude says it can't find a node — even though you just selected it — it'
 
 ## About
 
-Built by [Cosme Faé](https://linkedin.com/in/cosmefae) — designer, indie hacker, and AI workflow nerd.
+Built by [Cosme Faé](https://linkedin.com/in/cosmefae) — designer, indie hacker, AI workflow person.
 
-If you're building something with this or want to talk agentic design workflows: [hellofae.com](https://hellofae.com)
+→ [hellofae.com](https://hellofae.com)
