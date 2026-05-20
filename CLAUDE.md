@@ -57,3 +57,14 @@ See `README.md` § Available MCP tools for the full list (getProjectXml, upsertC
 - `server/src/bridge.ts` — WebSocket bridge (server side)
 - `plugin/src/bridge.ts` — WebSocket client (Framer plugin side)
 - `plugin/src/handlers.ts` — Framer API call implementations
+
+## API behavior (known quirks)
+
+**Always select first.** `getProjectXml` returns empty on large projects. Use `getSelectedNodesXml` as entry point. Tell user to select the node in Framer before any read/write operation.
+
+**`getNodeByID` limitations.** Does not reach nodes nested inside components. `handlers.ts` already has a fallback: if `getNodeByID` fails, it searches the current selection. Selection must be active for this to work.
+
+**`updateXmlForNode` JSON keys.**
+- `{"text": "..."}` → changes visible canvas text (calls `node.setText`)
+- `{"name": "..."}` → renames the layer in the panel (calls `setAttributes`)
+When user says "change the text", use `text`. When user says "rename the layer", use `name`.
