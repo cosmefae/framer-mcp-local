@@ -1,0 +1,7 @@
+{
+  "id": "framer-mcp-local",
+  "name": "MCP Local",
+  "description": "Conecta Claude Code ao Framer via bridge local — sem servidores externos.",
+  "permissions": ["read", "write"],
+  "main": "index.html"
+}

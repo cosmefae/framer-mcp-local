@@ -1,0 +1,11 @@
+{
+  "name": "framer-mcp-local",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": ["plugin", "server"],
+  "scripts": {
+    "dev:plugin": "npm run dev --workspace=plugin",
+    "build:server": "npm run build --workspace=server",
+    "build": "npm run build --workspace=plugin && npm run build --workspace=server"
+  }
+}
