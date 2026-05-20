@@ -71,6 +71,8 @@ export async function getSelectedNodesXml(): Promise<string> {
   return JSON.stringify(await Promise.all(nodes.map(nodeToObj)), null, 2)
 }
 
+const TEXT_STYLE_KEYS = new Set(["balance", "fontSize", "fontWeight", "fontStyle", "letterSpacing", "lineHeight", "textAlign", "textDecoration", "textTransform", "fontFamily", "fontVariant"])
+
 export async function updateXmlForNode({
   nodeId,
   xml,
@@ -81,7 +83,13 @@ export async function updateXmlForNode({
   const node = await resolveNode(nodeId)
   if (!node) throw new Error(`Node ${nodeId} not found`)
   const attrs = JSON.parse(xml)
-  // text nodes use setText instead of setAttributes
+
+  const isTextStyleOnly = Object.keys(attrs).every((k) => TEXT_STYLE_KEYS.has(k))
+  if (isTextStyleOnly) {
+    await (framer as any).setTextStyleAttributes?.(nodeId, attrs)
+    return `Updated text style on ${nodeId}`
+  }
+
   if (attrs.text !== undefined && typeof node.setText === "function") {
     await node.setText(attrs.text)
   } else if (attrs.name !== undefined && typeof node.setAttributes === "function") {
@@ -90,6 +98,18 @@ export async function updateXmlForNode({
     await node.setAttributes?.(attrs)
   }
   return `Updated node ${nodeId}`
+}
+
+export async function setNodeTextStyle({
+  nodeId,
+  attrs,
+}: {
+  nodeId: string
+  attrs: Record<string, unknown>
+}): Promise<string> {
+  const result = await (framer as any).setTextStyleAttributes?.(nodeId, attrs)
+  if (result === null || result === undefined) throw new Error(`setTextStyleAttributes failed for node ${nodeId}`)
+  return `Set text style on ${nodeId}`
 }
 
 export async function deleteNode({ nodeId }: { nodeId: string }): Promise<string> {
