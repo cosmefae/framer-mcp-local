@@ -35,7 +35,11 @@ export async function getProjectXml(): Promise<string> {
 }
 
 export async function getNodeXml({ nodeId }: { nodeId: string }): Promise<string> {
-  const node = await (framer as any).getNodeByID?.(nodeId)
+  let node = await (framer as any).getNodeByID?.(nodeId)
+  if (!node) {
+    const selected = await (framer as any).getSelectedNodes?.() ?? await framer.getSelection?.() ?? []
+    node = selected.find((n: any) => n.id === nodeId)
+  }
   if (!node) throw new Error(`Node ${nodeId} not found`)
   return JSON.stringify(nodeToObj(node), null, 2)
 }
@@ -52,10 +56,22 @@ export async function updateXmlForNode({
   nodeId: string
   xml: string
 }): Promise<string> {
-  const node = await (framer as any).getNodeByID?.(nodeId)
+  let node = await (framer as any).getNodeByID?.(nodeId)
+  if (!node) {
+    // fallback: find in current selection
+    const selected = await (framer as any).getSelectedNodes?.() ?? await framer.getSelection?.() ?? []
+    node = selected.find((n: any) => n.id === nodeId)
+  }
   if (!node) throw new Error(`Node ${nodeId} not found`)
   const attrs = JSON.parse(xml)
-  await node.setAttributes?.(attrs)
+  // text nodes use setText instead of setAttributes
+  if (attrs.text !== undefined && typeof node.setText === "function") {
+    await node.setText(attrs.text)
+  } else if (attrs.name !== undefined && typeof node.setAttributes === "function") {
+    await node.setAttributes(attrs)
+  } else {
+    await node.setAttributes?.(attrs)
+  }
   return `Updated node ${nodeId}`
 }
 

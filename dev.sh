@@ -2,12 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-[ -f server/dist/index.js ] || (cd server && npm run build)
-
-node server/dist/index.js &
-SERVER_PID=$!
-
-trap "kill $SERVER_PID 2>/dev/null || true" EXIT INT TERM
-
+# Only start Vite plugin server — WS bridge (9374) is owned by Claude Code MCP server
+# Running node server/dist/index.js here conflicts with Claude Code's MCP spawn
 cd plugin
 npm run dev
