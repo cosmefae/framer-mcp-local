@@ -2,9 +2,9 @@ import { useState, useEffect } from "react"
 import { setStatusCallback, type ConnectionStatus } from "./bridge.js"
 
 const STATUS_STYLES: Record<ConnectionStatus, { color: string; label: string; dot: string }> = {
-  connected: { color: "#22c55e", label: "Claude conectado", dot: "●" },
-  connecting: { color: "#eab308", label: "Conectando...", dot: "◌" },
-  disconnected: { color: "#ef4444", label: "Aguardando MCP server", dot: "○" },
+  connected: { color: "#22c55e", label: "Claude connected", dot: "●" },
+  connecting: { color: "#eab308", label: "Connecting...", dot: "◌" },
+  disconnected: { color: "#ef4444", label: "Waiting for MCP server", dot: "○" },
 }
 
 export function App() {
@@ -37,10 +37,10 @@ export function App() {
       <div style={{ fontWeight: 600, color: s.color }}>{s.label}</div>
       {status === "disconnected" && (
         <div style={{ color: "#6b7280", fontSize: 11, lineHeight: 1.5 }}>
-          Inicie o MCP server:
+          Start the MCP server:
           <br />
           <code style={{ color: "#9ca3af" }}>
-            node ~/git/framer-mcp-local/server/dist/index.mjs
+            npm run dev
           </code>
         </div>
       )}

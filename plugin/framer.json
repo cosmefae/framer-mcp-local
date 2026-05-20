@@ -1,7 +1,6 @@
 {
-  "id": "framer-mcp-local",
+  "id": "ze6ms4",
   "name": "MCP Local",
-  "description": "Conecta Claude Code ao Framer via bridge local — sem servidores externos.",
-  "permissions": ["read", "write"],
-  "main": "index.html"
+  "modes": ["canvas"],
+  "icon": "/icon.svg"
 }

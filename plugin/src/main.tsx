@@ -1,3 +1,4 @@
+import "framer-plugin/framer.css"
 import { createRoot } from "react-dom/client"
 import { framer } from "framer-plugin"
 import { App } from "./App.js"
