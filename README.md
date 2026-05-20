@@ -1,16 +1,16 @@
 # framer-mcp-local
 
-> **Heads up:** This is a stopgap. When Framer ships an official MCP — and they will — switch to that. Official beats community every time: better support, better stability, longer runway. Figma did it right with native MCP + Skills across Claude, Cursor, and others. Framer will get there.
+> **Heads up:** This is a stopgap. When Framer ships an official MCP, switch to that. Official beats community every time: better support, better stability, longer runway. Figma did it right with native MCP + Skills across Claude, Cursor, and others. Framer will get there.
 >
 > Until then: this works.
 
 ---
 
-Local bridge between Claude Code and Framer — runs entirely on your machine.
+Local bridge between Claude Code and Framer. Runs entirely on your machine.
 
 ## Why this exists
 
-Most Framer MCP setups route your project through a third-party server. Every canvas change, every CMS item, every code file — hitting someone else's infrastructure. Possibly Cloudflare. Possibly worse.
+Most Framer MCP setups route your project through a third-party server. Every canvas change, every CMS item, every code file hitting someone else's infrastructure. Possibly Cloudflare. Possibly worse.
 
 I didn't want that. So I built a local bridge: Claude → Node server on your machine → WebSocket → Framer plugin. Nothing leaves. No accounts, no API keys, no cloud dependency.
 
@@ -36,9 +36,9 @@ npm run build        # compiles server/dist/index.js
 npm run dev
 ```
 
-Starts **Vite dev server only** — plugin UI on `http://localhost:5173`.
+Starts **Vite dev server only** (plugin UI on `http://localhost:5173`).
 
-> **Why not start the MCP server here too?** Claude Code owns port 9374 — it spawns `node server/dist/index.js` via stdio on startup. If `npm run dev` also starts it, both fight for the port, the Claude-managed process loses, and no tools register. Don't touch 9374.
+> **Why not start the MCP server here too?** Claude Code owns port 9374. It spawns `node server/dist/index.js` via stdio on startup. If `npm run dev` also starts it, both fight for the port, the Claude-managed process loses, and no tools register. Don't touch 9374.
 
 ## Use with Claude Code
 
@@ -48,7 +48,7 @@ Starts **Vite dev server only** — plugin UI on `http://localhost:5173`.
 claude mcp add framer-local -- node /Users/cosmefae/git/framer-mcp-local/server/dist/index.js
 ```
 
-**2. Restart Claude Code** in this directory — it will auto-start the server via stdio on every session.
+**2. Restart Claude Code** in this directory. It will auto-start the server via stdio on every session.
 
 **3. Connect Framer plugin:**
 
@@ -103,12 +103,12 @@ Framer canvas / CMS / code files
 
 What people are using a local Claude ↔ Framer bridge for:
 
-→ **Programmatic SEO** — keyword list in, CMS entries + pages out, automatically
-→ **Marketing agents** — Claude updates copy, swaps headlines, refreshes CTAs based on briefs or test results
-→ **Voice/narrative shifts** — rewrite sections to match a new brand tone without touching the editor
-→ **Content pipelines** — pull from spreadsheets or APIs, push into Framer CMS directly
-→ **Design audits** — scan for inconsistencies (wrong colors, stale text styles), fix in batch
-→ **Launch automation** — flip "coming soon" to live content, swap placeholders, publish — one session
+→ **Programmatic SEO:** keyword list in, CMS entries + pages out, automatically
+→ **Marketing agents:** Claude updates copy, swaps headlines, refreshes CTAs based on briefs or test results
+→ **Voice/narrative shifts:** rewrite sections to match a new brand tone without touching the editor
+→ **Content pipelines:** pull from spreadsheets or APIs, push into Framer CMS directly
+→ **Design audits:** scan for inconsistencies (wrong colors, stale text styles), fix in batch
+→ **Launch automation:** flip "coming soon" to live content, swap placeholders, publish in one session
 
 ## How to actually use this
 
@@ -136,20 +136,20 @@ Internally, `{"text": "..."}` changes visible content and `{"name": "..."}` rena
 
 ### Nodes inside components
 
-Claude says node not found — even though you just selected it. It's inside a component. `getNodeByID` doesn't reach those.
+Claude says node not found. Even though you just selected it. It's inside a component. `getNodeByID` doesn't reach those.
 
 Fix: keep the element selected in Framer right before asking Claude to edit. The fallback reads from your active selection.
 
 ## Troubleshooting
 
-- **"Unable to connect"** — run `curl -s http://localhost:5173/framer.json`; must return `{"id":"ze6ms4",...}`.
-- **Plugin shows "Waiting for MCP server"** — server not running. Check: `lsof -i :9374`.
-- **Port 5173 in use** — `lsof -ti :5173 | xargs kill`
-- **Port 9374 in use / MCP tools missing** — another process stole the port before Claude. Run `lsof -ti :9374 | xargs kill`, then restart Claude Code. Do not run `node server/dist/index.js` manually.
-- **Server changes not reflected** — rebuild: `npm run build` then `npm run dev`.
+- **"Unable to connect":** run `curl -s http://localhost:5173/framer.json`. Must return `{"id":"ze6ms4",...}`.
+- **Plugin shows "Waiting for MCP server":** server not running. Check `lsof -i :9374`.
+- **Port 5173 in use:** `lsof -ti :5173 | xargs kill`
+- **Port 9374 in use / MCP tools missing:** another process stole the port before Claude. Run `lsof -ti :9374 | xargs kill`, then restart Claude Code. Do not run `node server/dist/index.js` manually.
+- **Server changes not reflected:** rebuild with `npm run build` then `npm run dev`.
 
 ## About
 
-Built by [Cosme Faé](https://linkedin.com/in/cosmefae) — designer, indie hacker, AI workflow person.
+Built by [Cosme Faé](https://linkedin.com/in/cosmefae), designer, indie hacker, AI workflow person.
 
 → [hellofae.com](https://hellofae.com)
