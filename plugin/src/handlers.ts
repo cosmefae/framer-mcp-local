@@ -6,47 +6,69 @@ import { framer } from "framer-plugin"
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function nodeToObj(node: Record<string, unknown>): Record<string, unknown> {
+async function nodeToObj(node: any): Promise<Record<string, unknown>> {
   const obj: Record<string, unknown> = {
     id: node.id,
     name: node.name,
     type: node.type,
   }
-  if (Array.isArray(node.children) && node.children.length > 0) {
-    obj.children = node.children.map(nodeToObj)
+  if (typeof node.getText === "function") {
+    const text = await node.getText()
+    if (text) obj.text = text
+  }
+  const children: any[] = typeof node.getChildren === "function"
+    ? await node.getChildren()
+    : Array.isArray(node.children) ? node.children : []
+  if (children.length > 0) {
+    obj.children = await Promise.all(children.map(nodeToObj))
   }
   return obj
+}
+
+async function resolveNode(nodeId: string): Promise<any | null> {
+  // Try all known Framer API node-lookup methods
+  const f = framer as any
+  for (const method of ["getNodeByID", "getNode", "getComponentById", "getNodeById"]) {
+    const node = await f[method]?.(nodeId)
+    if (node) return node
+  }
+  // Fallback: current selection
+  const selected = await f.getSelectedNodes?.() ?? await f.getSelection?.() ?? []
+  const fromSelection = selected.find((n: any) => n.id === nodeId)
+  if (fromSelection) return fromSelection
+  // Fallback: recursive tree walk
+  const pages = await f.getPages?.() ?? []
+  async function walk(nodes: any[]): Promise<any | null> {
+    for (const n of nodes) {
+      if (n.id === nodeId) return n
+      const children: any[] = typeof n.getChildren === "function"
+        ? await n.getChildren()
+        : Array.isArray(n.children) ? n.children : []
+      const found = await walk(children)
+      if (found) return found
+    }
+    return null
+  }
+  return walk(pages)
 }
 
 // ── Tool handlers ─────────────────────────────────────────────────────────────
 
 export async function getProjectXml(): Promise<string> {
-  // Returns a JSON-based project tree (Claude handles JSON just as well as XML)
-  // framer.currentPage gives the active page; all pages via framer.getPages()
   const pages = await (framer as any).getPages?.() ?? []
-  const result = await Promise.all(
-    pages.map(async (page: any) => ({
-      id: page.id,
-      name: page.name,
-      children: await page.getChildren?.() ?? [],
-    }))
-  )
+  const result = await Promise.all(pages.map(nodeToObj))
   return JSON.stringify(result, null, 2)
 }
 
 export async function getNodeXml({ nodeId }: { nodeId: string }): Promise<string> {
-  let node = await (framer as any).getNodeByID?.(nodeId)
-  if (!node) {
-    const selected = await (framer as any).getSelectedNodes?.() ?? await framer.getSelection?.() ?? []
-    node = selected.find((n: any) => n.id === nodeId)
-  }
+  const node = await resolveNode(nodeId)
   if (!node) throw new Error(`Node ${nodeId} not found`)
-  return JSON.stringify(nodeToObj(node), null, 2)
+  return JSON.stringify(await nodeToObj(node), null, 2)
 }
 
 export async function getSelectedNodesXml(): Promise<string> {
   const nodes = await (framer as any).getSelectedNodes?.() ?? await framer.getSelection?.() ?? []
-  return JSON.stringify(nodes.map(nodeToObj), null, 2)
+  return JSON.stringify(await Promise.all(nodes.map(nodeToObj)), null, 2)
 }
 
 export async function updateXmlForNode({
@@ -56,12 +78,7 @@ export async function updateXmlForNode({
   nodeId: string
   xml: string
 }): Promise<string> {
-  let node = await (framer as any).getNodeByID?.(nodeId)
-  if (!node) {
-    // fallback: find in current selection
-    const selected = await (framer as any).getSelectedNodes?.() ?? await framer.getSelection?.() ?? []
-    node = selected.find((n: any) => n.id === nodeId)
-  }
+  const node = await resolveNode(nodeId)
   if (!node) throw new Error(`Node ${nodeId} not found`)
   const attrs = JSON.parse(xml)
   // text nodes use setText instead of setAttributes
@@ -76,14 +93,14 @@ export async function updateXmlForNode({
 }
 
 export async function deleteNode({ nodeId }: { nodeId: string }): Promise<string> {
-  const node = await (framer as any).getNodeByID?.(nodeId)
+  const node = await (framer as any).getNodeByID?.(nodeId) ?? await resolveNode(nodeId)
   if (!node) throw new Error(`Node ${nodeId} not found`)
   await node.remove?.()
   return `Deleted node ${nodeId}`
 }
 
 export async function duplicateNode({ nodeId }: { nodeId: string }): Promise<string> {
-  const node = await (framer as any).getNodeByID?.(nodeId)
+  const node = await (framer as any).getNodeByID?.(nodeId) ?? await resolveNode(nodeId)
   if (!node) throw new Error(`Node ${nodeId} not found`)
   const clone = await node.clone?.()
   return JSON.stringify({ id: clone?.id })
